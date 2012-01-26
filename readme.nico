@@ -1,0 +1,72 @@
+mysql -u root -p
+<removed>
+-- Create database and user in MySQL
+SHOW DATABASES;
+CREATE DATABASE rackmonkey;
+CREATE USER 'rackmonk'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL
+-> TO 'rackmonk'@'localhost'
+-> ON rackmonkey.*;
+
+mysql -u root -p rackmonkey < sql/schema/schema.mysql.sql
+<removed>
+mysql -u root -p rackmonkey < sql/data/default_data.sql
+<removed>
+
+
+-- Create webdirs and make script globally executable
+sudo mkdir -p /var/www/rackmonkey
+sudo cp rackmonkey.pl /var/www/rackmonkey/
+sudo cp -rv RackMonkey/ /var/www/rackmonkey/
+chmod 0755 /var/www/rackmonkey/rackmonkey.pl 
+
+-- Copy content to webdir
+cp -rv www/* /var/www/rackmonkey/
+sudo cp -rv www/* /var/www/rackmonkey/
+sudo mkdir -p /var/lib/rackmonkey
+chown www-data:www-data /var/lib/rackmonkey/
+
+-- Create a populate template directory
+cp -rv tmpl/ /var/lib/rackmonkey/
+sudo cp -rv tmpl/ /var/lib/rackmonkey/
+
+-- Add apache configs to the mix
+sudo cp conf/httpd-rackmonkey.conf /etc/apache2/conf.d/
+
+-- Create the /etc/rackmonkey.conf file from the default
+sudo cp conf/rackmonkey.conf-default /etc/rackmonkey.conf
+cat /etc/rackmonkey.conf:
+##############################################################################
+# RackMonkey - Know Your Racks - http://www.rackmonkey.org                   #
+# Version 1.2.5-1                                                            #
+# (C)2004-2009 Will Green (wgreen at users.sourceforge.net)                  #
+# RackMonkey Configuration                                                   #
+##############################################################################
+
+# NB. Comments must either start a line or follow whitespace
+
+# Database Connection Settings
+dbconnect = dbi:mysql:dbname=rackmonkey
+dbuser = rackmonk
+dbpass = password
+
+# Path & URL Constants
+tmplpath = /var/lib/rackmonkey/tmpl
+wwwpath = /rackmonkey
+
+# Plugins - to enable/disable a plugin uncomment/comment the appropriate line
+#plugin_xls = rack2xls.pl
+#plugin_dns = rackdns.pl
+
+# URL to query Dell warranty and spec information
+dellquery = http://support.euro.dell.com/support/topics/topic.aspx/emea/shared/support/my_systems_info/en/details?c=uk&cs=ukbsdt1&l=en&s=bsd&~ck=ln&lnki=2&ServiceTag=
+
+# Preference Constants
+defaultview = rack      # Default view loaded when none is specified
+dateformat = %Y-%m-%d   # Format used to display dates (not currently used)
+shorttextlen = 32       # Shorten text longer than this for table views
+shorturllen = 64        # Shorten URLs longer than this for display
+number_from_top = 0     # Number racks from the top by default?
+size_of_u = 14          # The size of a 1U device in the physical rack view in pixels
+
+-- Test browsing to http://127.0.0.1/rackmonkey/rackmonkey.pl with success
